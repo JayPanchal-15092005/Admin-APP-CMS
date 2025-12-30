@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -11,7 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// 🟢 Clerk imports have been removed
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function AdminLogin() {
     { email: "gujaratinfotech.com", password: "gujaratinfotech.com" },
   ];
 
-  const onLogin = () => {
+  const onLogin = async () => {
     if (loading) return;
 
     if (!email || !password) {
@@ -46,17 +46,23 @@ export default function AdminLogin() {
     );
 
     // Simulate a small delay for a real "login" feel
-    setTimeout(() => {
-      setLoading(false);
-      if (user) {
-        // Success: Redirect to Admin Dashboard
+    setTimeout(async () => {
+    setLoading(false);
+    if (user) {
+      // 🟢 2. SAVE THE EMAIL SO NOTIFICATIONS WORK
+      try {
+        await SecureStore.setItemAsync("adminEmail", user.email);
+        
+        // 🟢 3. Redirect to Dashboard
         router.replace("/(admin)/complain");
-      } else {
-        // Error if come in the login
-        Alert.alert("Login Failed", "Invalid email or password");
+      } catch (e) {
+        console.error("Failed to save admin email", e);
       }
-    }, 600);
-  };
+    } else {
+      Alert.alert("Login Failed", "Invalid email or password");
+    }
+  }, 600);
+};
 
   return (
     <KeyboardAvoidingView

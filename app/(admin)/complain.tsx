@@ -2,9 +2,11 @@ import { getAdminHeaders } from "@/constants/adminAuth";
 import { API_BASE_URL } from "@/constants/Config";
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store"; // 🟢 Added for clearing session
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert, // 🟢 Added for confirmation
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -36,6 +38,31 @@ export default function AdminComplaints() {
   useEffect(() => {
     loadComplaints();
   }, []);
+
+  // 🟢 NEW: Sign Out Function
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to log out?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Log Out", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Clear the stored admin email to stop notifications
+              await SecureStore.deleteItemAsync("adminEmail");
+              // Go back to login
+              router.replace("/(auth)/login");
+            } catch (err) {
+              router.replace("/(auth)/login");
+            }
+          } 
+        }
+      ]
+    );
+  };
 
   const loadComplaints = async () => {
     try {
@@ -107,26 +134,25 @@ export default function AdminComplaints() {
     );
   }
 
-  if (!loading && complaints.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyIcon}>📋</Text>
-        <Text style={styles.emptyTitle}>No Complaints Found</Text>
-        <Text style={styles.emptySubtitle}>
-          Complaints will appear here once employees submit them.
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.wrapper}>
-      {/* Header with Stats */}
+      {/* Header with Stats & Sign Out */}
       <LinearGradient
         colors={['#3b82f6', '#2563eb', '#1d4ed8']}
         style={styles.header}
       >
-        <Text style={styles.headerTitle}>Admin Dashboard</Text>
+        <View style={styles.topHeaderRow}>
+            <Text style={styles.headerTitle}>Admin Dashboard</Text>
+            {/* 🟢 NEW: Sign Out Button */}
+            <TouchableOpacity 
+                style={styles.signOutButton} 
+                onPress={handleSignOut}
+                activeOpacity={0.7}
+            >
+                <Text style={styles.signOutText}>Sign Out 🚪</Text>
+            </TouchableOpacity>
+        </View>
+
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>{complaints.length}</Text>
@@ -147,129 +173,94 @@ export default function AdminComplaints() {
         </View>
       </LinearGradient>
 
-      <FlatList
-        data={complaints}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            {/* Card Header */}
-            <View style={styles.cardHeader}>
-              <View style={styles.departmentBadge}>
-                <Text style={styles.departmentIcon}>🏢</Text>
-                <Text style={styles.departmentText}>{item.department}</Text>
-              </View>
-              
-              {item.priority && (
-                <View 
-                  style={[
-                    styles.priorityBadge,
-                    { backgroundColor: `${getPriorityColor(item.priority)}20` }
-                  ]}
-                >
-                  <Text 
+      {complaints.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyIcon}>📋</Text>
+          <Text style={styles.emptyTitle}>No Complaints Found</Text>
+          <Text style={styles.emptySubtitle}>
+            Complaints will appear here once employees submit them.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={complaints}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.departmentBadge}>
+                  <Text style={styles.departmentIcon}>🏢</Text>
+                  <Text style={styles.departmentText}>{item.department}</Text>
+                </View>
+                
+                {item.priority && (
+                  <View 
                     style={[
-                      styles.priorityText,
-                      { color: getPriorityColor(item.priority) }
+                      styles.priorityBadge,
+                      { backgroundColor: `${getPriorityColor(item.priority)}20` }
                     ]}
                   >
-                    {item.priority}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Complaint Detail */}
-            <Text style={styles.detail} numberOfLines={2}>
-              {item.complain_detail}
-            </Text>
-
-            {/* Meta Info */}
-            {(item.complain_location || item.to_whom) && (
-              <View style={styles.metaRow}>
-                {item.complain_location && (
-                  <View style={styles.metaItem}>
-                    <Text style={styles.metaIcon}>📍</Text>
-                    <Text style={styles.metaText}>{item.complain_location}</Text>
-                  </View>
-                )}
-                {item.to_whom && (
-                  <View style={styles.metaItem}>
-                    <Text style={styles.metaIcon}>👷</Text>
-                    <Text style={styles.metaText}>{item.to_whom}</Text>
+                    <Text 
+                      style={[
+                        styles.priorityText,
+                        { color: getPriorityColor(item.priority) }
+                      ]}
+                    >
+                      {item.priority}
+                    </Text>
                   </View>
                 )}
               </View>
-            )}
 
-            {/* Date */}
-            {item.created_at && (
-              <Text style={styles.dateText}>
-                🕐 {formatDate(item.created_at)}
+              <Text style={styles.detail} numberOfLines={2}>
+                {item.complain_detail}
               </Text>
-            )}
 
-            {/* Divider */}
-            <View style={styles.cardDivider} />
-
-            {/* Actions Row */}
-            <View style={styles.actionsRow}>
-              {/* Status Badge */}
-              <View 
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: `${getStatusColor(item.status)}20` }
-                ]}
-              >
+              <View style={styles.actionsRow}>
                 <View 
                   style={[
-                    styles.statusDot,
-                    { backgroundColor: getStatusColor(item.status) }
-                  ]} 
-                />
-                <Text 
-                  style={[
-                    styles.statusText,
-                    { color: getStatusColor(item.status) }
+                    styles.statusBadge,
+                    { backgroundColor: `${getStatusColor(item.status)}20` }
                   ]}
                 >
-                  {item.status}
-                </Text>
-              </View>
-
-              {/* Action Buttons */}
-              <View style={styles.buttonGroup}>
-                <TouchableOpacity
-                  style={styles.viewButton}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(admin)/complain-details",
-                      params: { id: item.id },
-                    })
-                  }
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.viewButtonText}>View</Text>
-                  <Text style={styles.viewButtonIcon}>→</Text>
-                </TouchableOpacity>
-
-                {item.status === "Pending" && (
-                  <TouchableOpacity
-                    style={styles.resolveButton}
-                    onPress={() => resolveComplaint(item.id)}
-                    activeOpacity={0.7}
+                  <View 
+                    style={[
+                      styles.statusDot,
+                      { backgroundColor: getStatusColor(item.status) }
+                    ]} 
+                  />
+                  <Text 
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(item.status) }
+                    ]}
                   >
-                    <Text style={styles.resolveButtonText}>✓ Resolve</Text>
+                    {item.status}
+                  </Text>
+                </View>
+
+                <View style={styles.buttonGroup}>
+                  <TouchableOpacity
+                    style={styles.viewButton}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(admin)/complain-details",
+                        params: { id: item.id },
+                      })
+                    }
+                  >
+                    <Text style={styles.viewButtonText}>View →</Text>
                   </TouchableOpacity>
-                )}
+                </View>
               </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -290,6 +281,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  topHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   headerTitle: {
     fontSize: 28,
@@ -336,6 +333,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  signOutButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  signOutText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
