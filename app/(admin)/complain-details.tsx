@@ -4,13 +4,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -28,20 +28,6 @@ type ComplaintDetails = {
   assets?: string[];
 };
 
-// type ComplaintDetails = {
-//   id: string;
-//   department: string;
-//   complain_detail: string;
-//   status: string;
-//   created_at: string;
-//   priority?: string;
-//   complain_location?: string;
-//   to_whom?: string;
-//   // 🟢 Change these to match the database columns
-//   name?: string; 
-//   email?: string;
-//   assets?: string[];
-// };
 const adminEmail = "jayp93393@gmail.com";
 const adminPassword = "JayPanchal15092005";
 

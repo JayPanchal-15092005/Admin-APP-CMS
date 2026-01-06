@@ -5,15 +5,15 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store"; // 🟢 Added for clearing session
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert, // 🟢 Added for confirmation
-    FlatList,
-    Image,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert, // 🟢 Added for confirmation
+  FlatList,
+  Image,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const LOGO_IMG = require("@/assets/images/icon.png")
@@ -44,28 +44,19 @@ export default function AdminComplaints() {
 
   // 🟢 NEW: Sign Out Function
   const handleSignOut = () => {
-    Alert.alert(
-      "Sign Out",
-      "Are you sure you want to log out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Log Out", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Clear the stored admin email to stop notifications
-              await SecureStore.deleteItemAsync("adminEmail");
-              // Go back to login
-              router.replace("/(auth)/login");
-            } catch (err) {
-              router.replace("/(auth)/login");
-            }
-          } 
-        }
-      ]
-    );
-  };
+  Alert.alert("Sign Out", "Are you sure you want to log out?", [
+    { text: "Cancel", style: "cancel" },
+    {
+      text: "Log Out",
+      style: "destructive",
+      onPress: async () => {
+        // 🟢 CRITICAL: Delete the key so Auto-Login doesn't trigger next time
+        await SecureStore.deleteItemAsync("adminEmail"); 
+        router.replace("/(auth)/login");
+      },
+    },
+  ]);
+};
 
   const loadComplaints = async () => {
     try {

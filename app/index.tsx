@@ -1,17 +1,44 @@
-import { useUser } from "@clerk/clerk-expo";
-import { Redirect } from "expo-router";
+import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 
 export default function Index() {
-  const { user, isLoaded } = useUser();
+  const router = useRouter();
+  const [isChecking, setIsChecking] = useState(true);
 
-  if (!isLoaded) return null;
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
 
-  const role = user?.publicMetadata?.role;
+  const checkLoginStatus = async () => {
+    try {
+      // 🟢 Check if the admin email is saved in storage
+      const savedEmail = await SecureStore.getItemAsync("adminEmail");
 
-  if (role === "admin") {
-    return <Redirect href="/(admin)/complain" />;
+      if (savedEmail) {
+        // ✅ User is already logged in -> Go to Dashboard
+        router.replace("/(admin)/complain");
+      } else {
+        // ❌ No user found -> Go to Login
+        router.replace("/(auth)/login");
+      }
+    } catch (error) {
+      console.error("Auto-login error:", error);
+      router.replace("/(auth)/login");
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  // Show a loading spinner while we check
+  if (isChecking) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0f172a" }}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
   }
 
-  // ❌ Non-admins blocked
-  return <Redirect href="/(auth)/login" />;
+  return null;
 }
