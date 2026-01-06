@@ -43,7 +43,5 @@ app-example
 /android
 .env
 adminappnewbun-firebase-adminsdk-fbsvc-d6b9766964.json
-google-services.json
-google-services .json
 eas.json
 eas.json
