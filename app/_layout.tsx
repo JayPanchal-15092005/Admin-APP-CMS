@@ -19,34 +19,70 @@ const tokenCache = {
 export default function RootLayout() {
   
   // Inside Admin App _layout.tsx
+// useEffect(() => {
+//   const registerAdminPush = async () => {
+//     try {
+//       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+//       const { status } = await Notifications.requestPermissionsAsync();
+//       if (status !== 'granted') return;
+
+//       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+//       const token = tokenData.data;
+
+//       // Use the Admin's email from your hardcoded list or login state
+//       const currentAdminEmail = await SecureStore.getItemAsync("adminEmail"); 
+
+//     if (currentAdminEmail) {
+//       await fetch(`${API_BASE_URL}/api/admin/devices/register`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ email: currentAdminEmail, expoPushToken: token }),
+//       });
+//     }
+//   } catch (err) {
+//     console.error("Admin push error:", err);
+//     }
+//   };
+
+//   registerAdminPush();
+// }, []);
+
+// Inside Admin App _layout.tsx
 useEffect(() => {
   const registerAdminPush = async () => {
     try {
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== 'granted') return;
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') return;
 
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       const token = tokenData.data;
 
-      // Use the Admin's email from your hardcoded list or login state
+      // Ensure we get the email. If SecureStore is empty, we might need 
+      // to wait for Clerk's user object to load.
       const currentAdminEmail = await SecureStore.getItemAsync("adminEmail"); 
 
-    if (currentAdminEmail) {
-      await fetch(`${API_BASE_URL}/api/admin/devices/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: currentAdminEmail, expoPushToken: token }),
-      });
-    }
-  } catch (err) {
-    console.error("Admin push error:", err);
+      if (currentAdminEmail) {
+        await fetch(`${API_BASE_URL}/api/admin/devices/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: currentAdminEmail, expoPushToken: token }),
+        });
+        console.log("Admin registered with token:", token);
+      }
+    } catch (err) {
+      console.error("Admin push error:", err);
     }
   };
 
   registerAdminPush();
 }, []);
-
 
 
   const publishableKey =
