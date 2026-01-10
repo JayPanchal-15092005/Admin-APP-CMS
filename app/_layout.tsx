@@ -6,7 +6,6 @@ import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect } from "react";
 
-
 const tokenCache = {
   async getToken(key: string) {
     return SecureStore.getItemAsync(key);
@@ -18,72 +17,57 @@ const tokenCache = {
 
 export default function RootLayout() {
   
-  // Inside Admin App _layout.tsx
-// useEffect(() => {
-//   const registerAdminPush = async () => {
-//     try {
-//       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-//       const { status } = await Notifications.requestPermissionsAsync();
-//       if (status !== 'granted') return;
-
-//       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-//       const token = tokenData.data;
-
-//       // Use the Admin's email from your hardcoded list or login state
-//       const currentAdminEmail = await SecureStore.getItemAsync("adminEmail"); 
-
-//     if (currentAdminEmail) {
-//       await fetch(`${API_BASE_URL}/api/admin/devices/register`, {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ email: currentAdminEmail, expoPushToken: token }),
-//       });
-//     }
-//   } catch (err) {
-//     console.error("Admin push error:", err);
-//     }
-//   };
-
-//   registerAdminPush();
-// }, []);
-
-// Inside Admin App _layout.tsx
-useEffect(() => {
+  useEffect(() => {
   const registerAdminPush = async () => {
     try {
+      // 1. Get Project ID
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      if (!projectId) {
+        console.error("Missing Project ID! Check your app.json");
+        return;
+      }
+
+      // 2. Request Permissions
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-      
       if (existingStatus !== 'granted') {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
       if (finalStatus !== 'granted') return;
 
+      // 3. Get the Token specifically for this build (APK vs Expo Go)
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       const token = tokenData.data;
 
-      // Ensure we get the email. If SecureStore is empty, we might need 
-      // to wait for Clerk's user object to load.
+      // 4. IMPORTANT: Log this token to your console or an Alert 
+      // so you can see if it changed when you installed the APK
+      console.log("Current Device Token:", token);
+
+      // 5. Fetch the email - ensure this is set during login!
       const currentAdminEmail = await SecureStore.getItemAsync("adminEmail"); 
 
-      if (currentAdminEmail) {
-        await fetch(`${API_BASE_URL}/api/admin/devices/register`, {
+      if (currentAdminEmail && token) {
+        const response = await fetch(`${API_BASE_URL}/api/admin/devices/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: currentAdminEmail, expoPushToken: token }),
+          body: JSON.stringify({ 
+            email: currentAdminEmail, 
+            expoPushToken: token // This will overwrite the old Expo Go token
+          }),
         });
-        console.log("Admin registered with token:", token);
+
+        if (response.ok) {
+          console.log("Admin APK successfully registered!");
+        }
       }
     } catch (err) {
-      console.error("Admin push error:", err);
+      console.error("Admin push registration failed:", err);
     }
   };
 
   registerAdminPush();
 }, []);
-
 
   const publishableKey =
     Constants.expoConfig?.extra?.CLERK_PUBLISHABLE_KEY ||
