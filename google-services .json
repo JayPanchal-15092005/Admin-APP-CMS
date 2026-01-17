@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "530004529728",
-    "project_id": "adminappnewbun",
-    "storage_bucket": "adminappnewbun.firebasestorage.app"
+    "project_number": "43034011438",
+    "project_id": "admin-app-9f3f2",
+    "storage_bucket": "admin-app-9f3f2.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:530004529728:android:643db1e24725c7b48cc5a5",
+        "mobilesdk_app_id": "1:43034011438:android:fd7e3a9d34d06e2cb4bcbf",
         "android_client_info": {
           "package_name": "com.ketan_panchal.adminapp"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDHv7Q_qwhUiTRZCskAFx0T1mWDKewME50"
+          "current_key": "AIzaSyAmOWMavfeaakPcOWHzUVVXQNzCYHYCmq4"
         }
       ],
       "services": {
