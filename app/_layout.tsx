@@ -3,8 +3,8 @@ import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useRef } from "react";
-import { Alert, Platform } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Alert, AppState, Platform } from "react-native";
 
 // Hardcoded admin credentials
 const ADMIN_EMAIL = "jayp93393@gmail.com";
@@ -24,10 +24,26 @@ Notifications.setNotificationHandler({
 export default function RootLayout() {
   const notificationListener = useRef<any>(null);
   const responseListener = useRef<any>(null);
+  const appState = useRef(AppState.currentState);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   useEffect(() => {
+    console.log("🚀 Admin App Launched");
     // Register for push notifications on app start
     registerForPushNotifications();
+
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        console.log("📱 App came to foreground");
+        if (!isRegistered) {
+          registerForPushNotifications();
+        }
+      }
+      appState.current = nextAppState;
+    });
 
     // Listen for notifications
     notificationListener.current =
@@ -37,6 +53,7 @@ export default function RootLayout() {
         Alert.alert(
           notification.request.content.title || "New Notification",
           notification.request.content.body || "",
+          [{ text: "OK" }],
         );
       });
 
@@ -48,6 +65,7 @@ export default function RootLayout() {
       });
 
     return () => {
+      subscription.remove();
       if (notificationListener.current) {
         notificationListener.current.remove();
       }
@@ -85,6 +103,7 @@ export default function RootLayout() {
           vibrationPattern: [0, 250, 250, 250],
           lightColor: "#FF231F7C",
           sound: "default",
+          enableVibrate: true,
         });
         console.log("✅ Android notification channel created");
       }
