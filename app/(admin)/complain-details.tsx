@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -26,6 +27,7 @@ type ComplaintDetails = {
   submitter_name?: string;
   submitter_email?: string;
   assets?: string[];
+  admin_remarks?: string;
 };
 
 const adminEmail = "jayp93393@gmail.com";
@@ -37,10 +39,12 @@ export default function ComplaintDetailsScreen() {
   const [complaint, setComplaint] = useState<ComplaintDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState(false);
+  const [remarks, setRemarks] = useState("");
 
   useEffect(() => {
+    setRemarks("");
     loadDetails();
-  }, []);
+  }, [id]);
 
   const loadDetails = async () => {
     try {
@@ -68,7 +72,11 @@ export default function ComplaintDetailsScreen() {
 
       await fetch(`${API_BASE_URL}/api/complaints/${id}/resolve`, {
         method: "POST",
-        headers: getAdminHeaders(adminEmail, adminPassword),
+        headers: {
+          ...getAdminHeaders(adminEmail, adminPassword),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ remarks: remarks }),
       });
 
       await loadDetails();
@@ -162,9 +170,9 @@ export default function ComplaintDetailsScreen() {
             <Text style={styles.backButtonHeaderText}>← Back</Text>
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.adminBadge}>👑 ADMIN VIEW</Text>
+            <Text style={styles.adminBadge}>ADMIN VIEW</Text>
             <Text style={styles.headerTitle}>Complaint Details</Text>
-            <Text style={styles.headerSubtitle}>ID #{complaint.id}</Text>
+            <Text style={styles.headerSubtitle}>ID #{complaint?.id}</Text>
           </View>
         </LinearGradient>
 
@@ -219,7 +227,7 @@ export default function ComplaintDetailsScreen() {
                       styles.priorityBadge,
                       {
                         backgroundColor: `${getPriorityColor(
-                          complaint.priority
+                          complaint.priority,
                         )}20`,
                       },
                     ]}
@@ -264,10 +272,45 @@ export default function ComplaintDetailsScreen() {
               </View>
               <View style={styles.detailsBox}>
                 <Text style={styles.detailsText}>
-                  {complaint.complain_detail}
+                  {complaint?.complain_detail}
                 </Text>
               </View>
             </View>
+
+            {/* 🟢 NEW: Remarks & Action Section (Only for Pending) */}
+            {complaint?.status !== "Resolved" && (
+              <View style={styles.adminActionsCard}>
+                <Text style={styles.adminActionsTitle}>Resolution Action</Text>
+
+                <Text style={styles.sectionLabel}>Admin Remarks</Text>
+                <TextInput
+                  style={styles.remarksInput}
+                  placeholder="Describe how the issue was fixed..."
+                  placeholderTextColor="#94a3b8"
+                  multiline
+                  numberOfLines={4}
+                  value={remarks}
+                  onChangeText={setRemarks}
+                />
+
+                <TouchableOpacity
+                  style={[
+                    styles.actionButton,
+                    resolving && styles.actionButtonDisabled,
+                  ]}
+                  onPress={() => resolveComplaint(complaint!.id)} // 🟢 This button now sends the remarks
+                  disabled={resolving}
+                >
+                  {resolving ? (
+                    <ActivityIndicator color="#16a34a" size="small" />
+                  ) : (
+                    <Text style={styles.actionButtonText}>
+                      ✓ Submit & Mark Resolved
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
 
             {complaint.complain_location && (
               <View style={styles.section}>
@@ -299,7 +342,7 @@ export default function ComplaintDetailsScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionIcon}>🔧</Text>
-                  <Text style={styles.sectionTitle}>Related Assets</Text>
+                  <Text style={styles.sectionTitle}>Related Gadgets</Text>
                 </View>
                 <View style={styles.assetsContainer}>
                   {complaint.assets.map((asset, index) => (
@@ -358,6 +401,18 @@ export default function ComplaintDetailsScreen() {
               </Text>
             </View>
           )}
+
+          {complaint?.status === "Resolved" && (
+            <View style={styles.resolvedInfoCard}>
+              <Text style={styles.resolvedTitle}>✅ Resolved</Text>
+              <View style={styles.remarksBox}>
+                <Text style={styles.remarksLabel}>Admin Remarks:</Text>
+                <Text style={styles.remarksText}>
+                  {complaint.admin_remarks || "No remarks provided."}
+                </Text>
+              </View>
+            </View>
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -372,6 +427,77 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     backgroundColor: "#f8fafc",
+  },
+  adminActionsCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 10,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  adminActionsTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#1e293b",
+    marginBottom: 16,
+  },
+  remarksInput: {
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderRadius: 12,
+    padding: 15,
+    fontSize: 15,
+    color: "#334155",
+    textAlignVertical: "top",
+    minHeight: 120,
+    marginBottom: 20,
+  },
+  actionButton: {
+    backgroundColor: "#dcfce7",
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#10b981",
+    alignItems: "center",
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#16a34a",
+  },
+  resolvedInfoCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#10b981",
+  },
+  resolvedTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#16a34a",
+    marginBottom: 10,
+  },
+  remarksBox: {
+    backgroundColor: "#f0fdf4",
+    padding: 15,
+    borderRadius: 12,
+  },
+  remarksLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#15803d",
+    marginBottom: 4,
+    textTransform: "uppercase",
+  },
+  remarksText: {
+    fontSize: 15,
+    color: "#166534",
+    lineHeight: 22,
   },
   header: {
     paddingHorizontal: 20,
@@ -586,31 +712,6 @@ const styles = StyleSheet.create({
     color: "#334155",
     fontWeight: "600",
   },
-  adminActionsCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  adminActionsTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 16,
-  },
-  actionButton: {
-    backgroundColor: "#dcfce7",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: "#10b981",
-  },
   actionButtonDisabled: {
     opacity: 0.6,
   },
@@ -619,12 +720,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#16a34a",
-    textAlign: "center",
   },
   resolvedBanner: {
     flexDirection: "row",

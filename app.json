@@ -22,7 +22,9 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.ketan_panchal.adminapp",
       "googleServicesFile": "./google-services .json",
-      "permissions": ["NOTIFICATIONS"]
+      "permissions": [
+        "NOTIFICATIONS"
+      ]
     },
     "web": {
       "output": "static",
@@ -42,7 +44,8 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,
