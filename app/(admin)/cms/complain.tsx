@@ -1,5 +1,6 @@
 import { getAdminHeaders } from "@/constants/adminAuth";
 import { API_BASE_URL } from "@/constants/Config";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -12,6 +13,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -43,6 +45,9 @@ export default function AdminComplaints() {
     "All" | "Pending" | "Resolved"
   >("All");
 
+  // 🟢 NEW: Search State
+  const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
     loadComplaints();
   }, []);
@@ -64,6 +69,7 @@ export default function AdminComplaints() {
   const loadComplaints = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/complaints`, {
+        // I need to change this route to the new backend route
         headers: getAdminHeaders(adminEmail, adminPassword),
       });
 
@@ -81,13 +87,25 @@ export default function AdminComplaints() {
 
   const onRefresh = () => {
     setRefreshing(true);
+    setSearchQuery("");
     loadComplaints();
   };
 
-  // 🟢 NEW: Logic to filter the complaints based on selected button
+  // 🟢 UPDATED: Logic to filter by BOTH Status (Buttons) AND Search Text
   const filteredData = complaints.filter((item) => {
-    if (activeFilter === "All") return true;
-    return item.status === activeFilter;
+    // 1. Check if it matches the active status button
+    const matchesStatus =
+      activeFilter === "All" || item.status === activeFilter;
+
+    // 2. Check if it matches the search query
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch =
+      item.department?.toLowerCase().includes(searchLower) ||
+      item.complain_detail?.toLowerCase().includes(searchLower) ||
+      item.to_whom?.toLowerCase().includes(searchLower) || // Search by name if available
+      item.priority?.toLowerCase().includes(searchLower); // Search by priority
+
+    return matchesStatus && matchesSearch;
   });
 
   const getStatusColor = (status: string) => {
@@ -180,6 +198,31 @@ export default function AdminComplaints() {
         </View>
       </LinearGradient>
 
+      {/* 🟢 NEW: Search Bar Component */}
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#9CA3AF"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder={`Search ${activeFilter !== "All" ? activeFilter.toLowerCase() : "all"} complaints...`}
+          placeholderTextColor="#9CA3AF"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setSearchQuery("")}
+            style={styles.clearIcon}
+          >
+            <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       <FlatList
         data={filteredData} // 🟢 Use filtered data here
         keyExtractor={(item) => item.id}
@@ -187,6 +230,10 @@ export default function AdminComplaints() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        initialNumToRender={8} // Only we need draw the first 8 items on initial load
+        maxToRenderPerBatch={10} // When scrolling, only render 10 new items at a time
+        windowSize={5} // Don't keep too many off-screen items in memory
+        removeClippedSubviews={true} // Unmount items that are completely off the screen
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📋</Text>
@@ -250,7 +297,7 @@ export default function AdminComplaints() {
                 style={styles.viewButton}
                 onPress={() =>
                   router.push({
-                    pathname: "/(admin)/complain-details",
+                    pathname: "/(admin)/cms/complain-details",
                     params: { id: item.id },
                   })
                 }
@@ -284,6 +331,36 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     elevation: 8,
+  },
+  // 🟢 NEW: Search Bar Styles
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 4, // Slight margin to detach it from the list
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 48,
+    fontSize: 15,
+    color: "#1F2937",
+  },
+  clearIcon: {
+    padding: 4,
   },
   topHeaderRow: {
     flexDirection: "row",

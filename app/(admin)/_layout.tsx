@@ -8,53 +8,70 @@
 //   return <Slot />;
 // }
 
-import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context"; // 🟢 Added
+// import { Ionicons } from "@expo/vector-icons";
+// import { Tabs } from "expo-router";
+// import { useSafeAreaInsets } from "react-native-safe-area-context"; // 🟢 Added
+
+// export default function AdminLayout() {
+//   const insets = useSafeAreaInsets(); // 🟢 Get device bottom inset
+
+//   return (
+//     <Tabs
+//       screenOptions={{
+//         headerShown: false,
+//         tabBarActiveTintColor: "#2563eb",
+//         tabBarInactiveTintColor: "#64748b",
+//         // 🟢 FIX: Add padding based on device insets
+//         tabBarStyle: {
+//           height: 60 + insets.bottom,
+//           paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
+//           backgroundColor: "#ffffff",
+//           borderTopWidth: 1,
+//           borderTopColor: "#e2e8f0",
+//         },
+//       }}
+//     >
+//       <Tabs.Screen
+//         name="complain"
+//         options={{
+//           title: "Dashboard",
+//           tabBarIcon: ({ color }) => (
+//             <Ionicons name="speedometer-outline" size={24} color={color} />
+//           ),
+//         }}
+//       />
+//       <Tabs.Screen
+//         name="reports"
+//         options={{
+//           title: "Reports",
+//           tabBarIcon: ({ color }) => (
+//             <Ionicons name="stats-chart-outline" size={24} color={color} />
+//           ),
+//         }}
+//       />
+//       <Tabs.Screen
+//         name="complain-details"
+//         options={{
+//           href: null, // Keeps it hidden from UI
+//         }}
+//       />
+//     </Tabs>
+//   );
+// }
+
+import { Stack } from "expo-router";
 
 export default function AdminLayout() {
-  const insets = useSafeAreaInsets(); // 🟢 Get device bottom inset
-
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#2563eb",
-        tabBarInactiveTintColor: "#64748b",
-        // 🟢 FIX: Add padding based on device insets
-        tabBarStyle: {
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
-          backgroundColor: "#ffffff",
-          borderTopWidth: 1,
-          borderTopColor: "#e2e8f0",
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="complain"
-        options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="speedometer-outline" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="reports"
-        options={{
-          title: "Reports",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="stats-chart-outline" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="complain-details"
-        options={{
-          href: null, // Keeps it hidden from UI
-        }}
-      />
-    </Tabs>
+    <Stack screenOptions={{ headerShown: false }}>
+      {/* This is your new 4-grid Main Menu */}
+      <Stack.Screen name="index" />
+
+      {/* These are your 4 modules */}
+      <Stack.Screen name="cms" />
+      <Stack.Screen name="daily-reports" />
+      <Stack.Screen name="stationery" />
+      <Stack.Screen name="recharge" />
+    </Stack>
   );
 }

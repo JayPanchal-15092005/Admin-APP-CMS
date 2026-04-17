@@ -2,15 +2,15 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function AdminLogin() {
@@ -42,27 +42,28 @@ export default function AdminLogin() {
 
     // Simple credential check logic
     const user = VALID_USERS.find(
-      (u) => u.email.trim() === email.trim() && u.password === password
+      (u) => u.email.trim() === email.trim() && u.password === password,
     );
 
     // Simulate a small delay for a real "login" feel
     setTimeout(async () => {
-    setLoading(false);
-    if (user) {
-      // 🟢 2. SAVE THE EMAIL SO NOTIFICATIONS WORK
-      try {
-        await SecureStore.setItemAsync("adminEmail", user.email);
-        
-        // 🟢 3. Redirect to Dashboard
-        router.replace("/(admin)/complain");
-      } catch (e) {
-        console.error("Failed to save admin email", e);
+      setLoading(false);
+      if (user) {
+        // 🟢 2. SAVE THE EMAIL SO NOTIFICATIONS WORK
+        try {
+          await SecureStore.setItemAsync("adminEmail", user.email);
+          await SecureStore.setItemAsync("adminPassword", user.password);
+
+          // 🟢 3. Redirect to Dashboard
+          router.replace("/(admin)/cms/complain");
+        } catch (e) {
+          console.error("Failed to save admin email", e);
+        }
+      } else {
+        Alert.alert("Login Failed", "Invalid email or password");
       }
-    } else {
-      Alert.alert("Login Failed", "Invalid email or password");
-    }
-  }, 600);
-};
+    }, 600);
+  };
 
   return (
     <KeyboardAvoidingView
@@ -105,9 +106,7 @@ export default function AdminLogin() {
           )}
         </TouchableOpacity>
 
-        <Text style={styles.footerText}>
-          CMS Admin Portal v2.0
-        </Text>
+        <Text style={styles.footerText}>CMS Admin Portal v2.0</Text>
       </View>
     </KeyboardAvoidingView>
   );

@@ -1,12 +1,14 @@
 import { API_BASE_URL } from "@/constants/Config";
 import { getAdminHeaders } from "@/constants/adminAuth";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { File, Paths } from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert, // 🟢 ADDED: For error messages
   ScrollView,
   StyleSheet,
   Text,
@@ -33,6 +35,47 @@ export default function ReportScreen() {
   }>({ type: "start", show: false });
 
   const [reportData, setReportData] = useState<any>(null);
+
+  // 🟢 NEW: CSV Export Function
+  const exportCSV = async () => {
+    if (!reportData || !reportData.deptStats) {
+      Alert.alert("No Data", "There is no data to export.");
+      return;
+    }
+
+    try {
+      // 1. Create the CSV Header Row
+      let csvString =
+        "Department,Total Complaints,Resolved,Pending,High Priority\n";
+
+      // 2. Add the Data Rows
+      reportData.deptStats.forEach((dept: any) => {
+        const pending = dept.total - dept.resolved;
+        csvString += `${dept.department},${dept.total},${dept.resolved},${pending},${dept.high_priority || 0}\n`;
+      });
+
+      // 3. Add a Summary Row at the bottom
+      csvString += `\nSUMMARY,${reportData.summary.total},${reportData.summary.resolved},${reportData.summary.pending},${reportData.summary.high_priority}\n`;
+
+      // 4. Create a file path on the phone
+      const filename = `CMS_Report_${startDate.toISOString().split("T")[0]}_to_${endDate.toISOString().split("T")[0]}.csv`;
+      const file = new File(Paths.document, filename);
+
+      // 5. Write the CSV string to the file (overwrite if it already exists)
+      file.create({ overwrite: true });
+      file.write(csvString);
+
+      // 6. Share the file using the new file.uri!
+      await Sharing.shareAsync(file.uri, {
+        mimeType: "text/csv",
+        dialogTitle: "Export CMS Report Data",
+        UTI: "public.comma-separated-values-text",
+      });
+    } catch (error) {
+      console.error("CSV Export Error:", error);
+      Alert.alert("Export Failed", "Could not generate the CSV file.");
+    }
+  };
 
   const exportPDF = async () => {
     if (!reportData) return;
@@ -92,13 +135,35 @@ export default function ReportScreen() {
 
   useEffect(() => {
     fetchAnalytics();
-  }, [selectedDept]); // 🟢 Fetch again when department selection changes
+  }, [selectedDept]);
+
+  // const fetchAnalytics = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const sDate = startDate.toISOString().split("T")[0];
+  //     const eDate = endDate.toISOString().split("T")[0];
+
+  //     const url = `${API_BASE_URL}/api/admin/reports?startDate=${sDate}&
+  //     endDate=${eDate}&department=${selectedDept}`;
+
+  //     const res = await fetch(url, {
+  //       headers: getAdminHeaders(adminEmail, adminPassword),
+  //     });
+  //     const data = await res.json();
+  //     setReportData(data);
+  //   } catch (error) {
+  //     console.error("Analytics Error:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const sDate = startDate.toISOString().split("T")[0];
-      const eDate = endDate.toISOString().split("T")[0];
+      // 🟢 FIX: Extract exact local date to stop the "yesterday" Timezone bug
+      const sDate = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}-${String(startDate.getDate()).padStart(2, "0")}`;
+      const eDate = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
 
       // 🟢 CORRECTED: Added department to URL
       const url = `${API_BASE_URL}/api/admin/reports?startDate=${sDate}&endDate=${eDate}&department=${selectedDept}`;
@@ -130,7 +195,6 @@ export default function ReportScreen() {
       </LinearGradient>
 
       <View style={styles.content}>
-        {/* 🟢 MODIFIED: Department Selection Horizontal Chips */}
         <Text style={styles.cardLabel}>🏢 Filter by Department</Text>
         <ScrollView
           horizontal
@@ -194,9 +258,16 @@ export default function ReportScreen() {
           />
         ) : reportData ? (
           <>
-            <TouchableOpacity style={styles.pdfBtn} onPress={exportPDF}>
-              <Text style={styles.pdfBtnText}>📄 Export PDF Report</Text>
-            </TouchableOpacity>
+            {/* 🟢 MODIFIED: Export Buttons Row */}
+            <View style={styles.exportButtonRow}>
+              <TouchableOpacity style={styles.csvBtn} onPress={exportCSV}>
+                <Text style={styles.exportBtnText}>📊 Export CSV</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.pdfBtn} onPress={exportPDF}>
+                <Text style={styles.exportBtnText}>📄 Export PDF</Text>
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.statCard}>
               <Text style={styles.statTitle}>🔥 Priority Insights</Text>
@@ -272,13 +343,12 @@ const styles = StyleSheet.create({
   },
   content: { padding: 16 },
 
-  // 🟢 NEW: Department Selector Styles
   deptSelector: {
     marginBottom: 20,
   },
   deptSelectorContent: {
     paddingRight: 20,
-    gap: 10, // Modern gap property for spacing
+    gap: 10,
   },
   deptChip: {
     backgroundColor: "#ffffff",
@@ -346,19 +416,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   applyBtnText: { color: "#fff", fontWeight: "700" },
-  pdfBtn: {
-    backgroundColor: "#10b981",
-    padding: 16,
-    borderRadius: 12,
+
+  // 🟢 NEW: Styles for the Export Buttons side-by-side
+  exportButtonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 20,
+    gap: 10,
+  },
+  csvBtn: {
+    flex: 1,
+    backgroundColor: "#10b981", // Green for Excel/CSV
+    padding: 14,
+    borderRadius: 12,
     alignItems: "center",
     elevation: 2,
   },
-  pdfBtnText: {
+  pdfBtn: {
+    flex: 1,
+    backgroundColor: "#ef4444", // Red for PDF
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    elevation: 2,
+  },
+  exportBtnText: {
     color: "#fff",
     fontWeight: "800",
-    fontSize: 16,
+    fontSize: 15,
   },
+
   statCard: {
     backgroundColor: "#fff",
     padding: 20,

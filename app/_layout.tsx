@@ -153,6 +153,7 @@ export default function RootLayout() {
       console.log("   API URL:", `${API_BASE_URL}/api/admin/devices/register`);
 
       const response = await fetch(
+        // I need to change this route to the new backend route
         `${API_BASE_URL}/api/admin/devices/register`,
         {
           method: "POST",

@@ -18,7 +18,7 @@ export default function Index() {
 
       if (savedEmail) {
         // ✅ User is already logged in -> Go to Dashboard
-        router.replace("/(admin)/complain");
+        router.replace("/(admin)");
       } else {
         // ❌ No user found -> Go to Login
         router.replace("/(auth)/login");
@@ -34,7 +34,14 @@ export default function Index() {
   // Show a loading spinner while we check
   if (isChecking) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0f172a" }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#0f172a",
+        }}
+      >
         <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
