@@ -1,6 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,7 +14,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function AdminDashboardScreen() {
   const router = useRouter();
 
-  // Array of your 4 modules based on your Eraser design
+  const handleSignOut = () => {
+    Alert.alert("Sign Out", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log Out",
+        style: "destructive",
+        onPress: async () => {
+          await SecureStore.deleteItemAsync("adminEmail");
+          await SecureStore.deleteItemAsync("adminPassword");
+          router.replace("/(auth)/login");
+        },
+      },
+    ]);
+  };
+
   const modules = [
     {
       id: "cms",
@@ -20,7 +36,7 @@ export default function AdminDashboardScreen() {
       subtitle: "Manage IT Complaints",
       icon: "🏢",
       route: "/(admin)/cms",
-      color: "#3b82f6", // Blue
+      color: "#3b82f6",
     },
     {
       id: "daily-reports",
@@ -28,7 +44,7 @@ export default function AdminDashboardScreen() {
       subtitle: "View Employee Work",
       icon: "📝",
       route: "/(admin)/daily-reports",
-      color: "#10b981", // Green
+      color: "#10b981",
     },
     {
       id: "stationery",
@@ -36,7 +52,7 @@ export default function AdminDashboardScreen() {
       subtitle: "Office Supplies",
       icon: "✏️",
       route: "/(admin)/stationery/dashboard",
-      color: "#f59e0b", // Orange
+      color: "#f59e0b",
     },
     {
       id: "recharge",
@@ -44,28 +60,33 @@ export default function AdminDashboardScreen() {
       subtitle: "Phone Allowances",
       icon: "📱",
       route: "/(admin)/recharge/dashboard",
-      color: "#8b5cf6", // Purple
+      color: "#8b5cf6",
     },
   ];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.wrapper}>
-        {/* Header Section */}
         <LinearGradient
           colors={["#1f2937", "#111827", "#000000"]}
           style={styles.header}
         >
-          <View style={styles.headerContent}>
-            <Text style={styles.adminBadge}>ADMIN PORTAL</Text>
-            <Text style={styles.headerTitle}>Overview</Text>
-            <Text style={styles.headerSubtitle}>
-              Select a module to view data and reports
-            </Text>
+          {/* 🟢 BULLETPROOF ROW BOUNDARY */}
+          <View style={styles.headerTopRow}>
+            <View style={styles.headerContent}>
+              <Text style={styles.adminBadge}>ADMIN PORTAL</Text>
+              <Text style={styles.headerTitle}>Overview</Text>
+              <Text style={styles.headerSubtitle}>
+                Select a module to view data and reports
+              </Text>
+            </View>
+
+            <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
+              <Text style={styles.signOutText}>Sign Out</Text>
+            </TouchableOpacity>
           </View>
         </LinearGradient>
 
-        {/* Grid Section */}
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -108,14 +129,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingTop: 60,
     paddingBottom: 40,
+    paddingHorizontal: 24, // 🟢 Keeps everything strictly inside the edges
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
-  headerContent: {
+  headerTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "flex-start",
+    width: "100%", // 🟢 Forces the row to respect the padding
+  },
+  headerContent: {
+    flex: 1, // 🟢 Tells text to take available space but no more
+    marginRight: 16, // Adds a gap between text and button
   },
   adminBadge: {
     fontSize: 12,
@@ -135,9 +163,24 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     fontWeight: "500",
   },
+  signOutBtn: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    flexShrink: 0, // 🟢 CRITICAL: Prevents the button from being squished or hidden
+    marginTop: 4, // Slight nudge down to align with the title
+  },
+  signOutText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "bold",
+  },
   scrollView: {
     flex: 1,
-    marginTop: -20, // Pulls the grid up slightly over the curved header
+    marginTop: -20,
   },
   scrollContent: {
     padding: 16,
@@ -151,7 +194,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#ffffff",
-    width: "47%", // Leaves room for the gap
+    width: "47%",
     borderRadius: 20,
     padding: 20,
     shadowColor: "#000",

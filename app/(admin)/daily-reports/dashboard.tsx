@@ -80,17 +80,20 @@ export default function DailyReportDashboard() {
 
   return (
     <View style={styles.container}>
+      {/* 🟢 FIXED HEADER STRUCTURE */}
       <View style={styles.header}>
-        <Text style={styles.title}>Inbox</Text>
-        <Text style={styles.subtitle}>Recent Daily Reports</Text>
-      </View>
+        <View>
+          <Text style={styles.title}>Inbox</Text>
+          <Text style={styles.subtitle}>Recent Daily Reports</Text>
+        </View>
 
-      <TouchableOpacity
-        onPress={() => router.replace("/(admin)")}
-        style={styles.homeButton}
-      >
-        <Ionicons name="home" size={24} color="#fff" />
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.replace("/(admin)")}
+          style={styles.homeButton}
+        >
+          <Ionicons name="home" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
       {loading ? (
         <ActivityIndicator
@@ -127,8 +130,11 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     backgroundColor: "#111827",
     paddingBottom: 20,
+    // Make them sit side-by-side
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  // 🟢 Add this new style for the button background
   homeButton: {
     backgroundColor: "#1f2937",
     padding: 10,

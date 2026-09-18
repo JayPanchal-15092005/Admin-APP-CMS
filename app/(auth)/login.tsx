@@ -22,12 +22,7 @@ export default function AdminLogin() {
 
   // 🟢 Hardcoded credentials provided by you
   const VALID_USERS = [
-    { email: "jayp93393@gmail.com", password: "JayPanchal15092005" },
-    {
-      email: "itsupport@gujaratinfotech.com",
-      password: "itsupport@gujaratinfotech.com",
-    },
-    { email: "gujaratinfotech.com", password: "gujaratinfotech.com" },
+    { email: "Admin", password: "Admin@1234" },
   ];
 
   const onLogin = async () => {

@@ -1,15 +1,16 @@
 import { API_BASE_URL } from "@/constants/Config";
+import { Ionicons } from "@expo/vector-icons"; // 🟢 Added this import
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function RechargeDashboard() {
@@ -80,9 +81,19 @@ export default function RechargeDashboard() {
 
   return (
     <View style={styles.container}>
+      {/* 🟢 FIXED HEADER STRUCTURE WITH HOME BUTTON */}
       <View style={styles.header}>
-        <Text style={styles.title}>Recharges</Text>
-        <Text style={styles.subtitle}>Mobile Allowance Requests</Text>
+        <View>
+          <Text style={styles.title}>Recharges</Text>
+          <Text style={styles.subtitle}>Mobile Allowance Requests</Text>
+        </View>
+
+        <TouchableOpacity
+          onPress={() => router.replace("/(admin)")}
+          style={styles.homeButton}
+        >
+          <Ionicons name="home" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -120,6 +131,16 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     backgroundColor: "#111827",
     paddingBottom: 20,
+    // 🟢 Added flexbox rules for side-by-side alignment
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  // 🟢 Added style for the home button
+  homeButton: {
+    backgroundColor: "#1f2937",
+    padding: 10,
+    borderRadius: 12,
   },
   title: { fontSize: 28, fontWeight: "bold", color: "#fff" },
   subtitle: { fontSize: 14, color: "#9ca3af", marginTop: 4 },
